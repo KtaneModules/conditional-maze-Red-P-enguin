@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conditional Maze", "Conditional Maze.csproj", "{758F4330-35F1-AB60-FBDB-CFD0A2324FBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conditional Maze.Editor", "Conditional Maze.Editor.csproj", "{6F8664AC-AB78-3578-CE99-DC228474CADD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{758F4330-35F1-AB60-FBDB-CFD0A2324FBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{758F4330-35F1-AB60-FBDB-CFD0A2324FBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{758F4330-35F1-AB60-FBDB-CFD0A2324FBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{758F4330-35F1-AB60-FBDB-CFD0A2324FBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F8664AC-AB78-3578-CE99-DC228474CADD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F8664AC-AB78-3578-CE99-DC228474CADD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F8664AC-AB78-3578-CE99-DC228474CADD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F8664AC-AB78-3578-CE99-DC228474CADD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
