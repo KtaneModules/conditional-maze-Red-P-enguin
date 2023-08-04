@@ -27,6 +27,7 @@ public class script : MonoBehaviour {
     bool timeLimitForMoving; //between waiting
     int timeLimit;
     bool didDefocus; //defocus
+    bool afterFirstPress; //this makes the defocus work how i want it to
     bool trackingMultiplePresses; //multiple presses
     bool differentButton;
     int remainingRepeatPresses; 
@@ -210,7 +211,7 @@ public class script : MonoBehaviour {
 
         int seconds = timePressed % 60;
         int minutes = (timePressed - seconds) / 60;
-        Log(directionNames[pressedButton] +  " button pressed at " + minutes + ":" + seconds + "." + pressedMessage);
+        Log(directionNames[pressedButton] +  " button pressed at " + minutes + ":" + seconds.ToString("00") + "." + pressedMessage);
     }
 
     void buttonReleased(int pressedButton)
@@ -219,7 +220,7 @@ public class script : MonoBehaviour {
         int seconds = timeReleased % 60;
         int minutes = (timeReleased - seconds) / 60;
         durationHeld = Mathf.Abs(timePressed - timeReleased);
-        Log("Button released at " + minutes + ":" + seconds + ". It was held for " + durationHeld + " timer ticks.");
+        Log("Button released at " + minutes + ":" + seconds.ToString("00") + ". It was held for " + durationHeld + " timer ticks.");
 
         if (timeLimitForMoving)
         {
@@ -227,7 +228,7 @@ public class script : MonoBehaviour {
         }
 
         bool repeatingPresses = false;
-        bool quotaFufilled = false;
+        bool quotaMet = false;
         if (trackingMultiplePresses)
         {
             if ((differentButton || remainingRepeatPresses <= 0))
@@ -249,8 +250,7 @@ public class script : MonoBehaviour {
                 remainingRepeatPresses--;
                 if(remainingRepeatPresses <= 0)
                 {
-                    print("yeah");
-                    quotaFufilled = true;
+                    quotaMet = true;
                 }
                 repeatingPresses = true;
             }
@@ -337,7 +337,7 @@ public class script : MonoBehaviour {
 
         if (followedAllConditions())
         {
-            if (!visitedSquares[playerPositionX, playerPositionY] && (!trackingMultiplePresses || quotaFufilled))
+            if (!visitedSquares[playerPositionX, playerPositionY] && (!repeatingPresses || quotaMet))
             {
                 currentConditions.Add(mazeConditionsTable[playerPositionX, playerPositionY]);
                 Log("Added condition: " + LogCondition(currentConditions[currentConditions.Count - 1]));
@@ -353,12 +353,7 @@ public class script : MonoBehaviour {
         }
 
         didDefocus = false;
-
-        if(trackingMultiplePresses && !quotaFufilled)
-        {
-            return;
-        }
-
+        afterFirstPress = true;
         visitedSquares[playerPositionX, playerPositionY] = true;
 
         if (playerPositionX == goalPositionX && playerPositionY == goalPositionY)
@@ -399,16 +394,35 @@ public class script : MonoBehaviour {
         StartCoroutine(AnimateGoal());
         StartCoroutine(AnimatePlayer());
 
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                int dummyi = i;
+                int dummyj = j;
+                if (conditionLights[j, i])
+                {
+                    mazeSprites[dummyj + (dummyi * 4)].color = Color.white;
+                }
+                else
+                {
+                    mazeSprites[dummyj + (dummyi * 4)].color = new Color(94/255f, 94/255f, 94/255f);
+                }
+            }
+        }
+
         foreach (SpriteRenderer sprite in mazeSprites)
         {
             StartCoroutine(StrikeAnimation(sprite));
         }
         foreach (SpriteRenderer sprite in horizontalWalls)
         {
+            sprite.color = Color.white;
             StartCoroutine(StrikeAnimation(sprite));
         }
         foreach (SpriteRenderer sprite in verticalWalls)
         {
+            sprite.color = Color.white;
             StartCoroutine(StrikeAnimation(sprite));
         }
 
@@ -428,7 +442,6 @@ public class script : MonoBehaviour {
         trackingMultiplePresses = false;
         remainingRepeatPresses = 0;
 
-        StopCoroutine(WaitForTimeLimit(timeLimit));
         modifiedDirections = new int[4] { 0, 1, 2, 3 };
 
         currentConditions.Add(mazeConditionsTable[playerPositionX, playerPositionY]);
@@ -768,7 +781,7 @@ public class script : MonoBehaviour {
                     }
                     break;
                 case Condition.Types.Defocus:
-                    if (!didDefocus && buttonWasPressed)
+                    if (!didDefocus && afterFirstPress)
                     {
                         Log("The defuser did not defocus the module.");
                         return false;
@@ -788,9 +801,8 @@ public class script : MonoBehaviour {
         {
             for (int i = 0; i < 4; i++)
             {
-                modifiedDirections[i] = (modifiedDirections[i] + currentConditions[currentConditions.Count - 1].Variable) % 4;
+                modifiedDirections[i] = (modifiedDirections[i] - currentConditions[currentConditions.Count - 1].Variable + 4) % 4;
             }
-            return;
         }
 
         if (condition.Type == Condition.Types.ControlsFlipHorizontal)
@@ -798,14 +810,12 @@ public class script : MonoBehaviour {
             int oldLeft = modifiedDirections[1];
             modifiedDirections[1] = modifiedDirections[3];
             modifiedDirections[3] = oldLeft;
-            return;
         }
         if (condition.Type == Condition.Types.ControlsFlipVertical)
         {
             int oldUp = modifiedDirections[0];
             modifiedDirections[0] = modifiedDirections[2];
             modifiedDirections[2] = oldUp;
-            return;
         }
         if (condition.Type == Condition.Types.ControlsFlipLeftDiagonal)
         {
@@ -818,11 +828,9 @@ public class script : MonoBehaviour {
             modifiedDirections[1] = oldDirections[2];
             modifiedDirections[2] = oldDirections[1];
             modifiedDirections[3] = oldDirections[0];
-            return;
         }
         if (condition.Type == Condition.Types.ControlsFlipRightDiagonal)
         {
-            StopCoroutine(WaitForTimeLimit(timeLimit));
             int[] oldDirections = new int[4];
             for (int i = 0; i < 4; i++)
             {
@@ -832,15 +840,21 @@ public class script : MonoBehaviour {
             modifiedDirections[1] = oldDirections[0];
             modifiedDirections[2] = oldDirections[3];
             modifiedDirections[3] = oldDirections[2];
-            return;
+        }
+
+        if(condition.Type == Condition.Types.BetweenMaximum)
+        {
+            timeLimitForMoving = true;
+            timeLimit = condition.Variable;
         }
 
         if (condition.Type == Condition.Types.MultiplePresses)
         {
             trackingMultiplePresses = true;
             repeatPressesQuota = currentConditions[currentConditions.Count - 1].Variable;
-            return;
         }
+
+        //print(modifiedDirections[0] + "" + modifiedDirections[1] + modifiedDirections[2] + modifiedDirections[3]);
     }
 
     IEnumerator AnimatePlayer()
